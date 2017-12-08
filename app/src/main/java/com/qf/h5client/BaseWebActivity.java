@@ -1,5 +1,6 @@
 package com.qf.h5client;
 
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -11,6 +12,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -21,33 +23,20 @@ import android.widget.TextView;
 
 import com.just.library.AgentWeb;
 import com.just.library.ChromeClientCallbackManager;
-
-/**
- * Created by cenxiaozhong on 2017/5/26.
- *
- * source CODE  https://github.com/Justson/AgentWeb
- *
- * <p>
- */
+import com.qf.h5client.widget.GifView;
 
 public class BaseWebActivity extends AppCompatActivity {
-
-
-
     protected AgentWeb mAgentWeb;
     private LinearLayout mLinearLayout;
     private Toolbar mToolbar;
     private TextView mTitleTextView;
     private AlertDialog mAlertDialog;
-
-
+    private Dialog mDialog;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        showLoading();
         setContentView(R.layout.activity_web);
-
-
         mLinearLayout = (LinearLayout) this.findViewById(R.id.container);
         mToolbar = (Toolbar) this.findViewById(R.id.toolbar);
         mToolbar.setTitleTextColor(Color.WHITE);
@@ -60,16 +49,12 @@ public class BaseWebActivity extends AppCompatActivity {
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 showDialog();
             }
         });
-
-
         long p = System.currentTimeMillis();
-
         mAgentWeb = AgentWeb.with(this)//
-                .setAgentWebParent(mLinearLayout,new LinearLayout.LayoutParams(-1,-1) )//
+                .setAgentWebParent(mLinearLayout, new LinearLayout.LayoutParams(-1, -1))//
                 .useDefaultIndicator()//
                 .defaultProgressBarColor()
                 .setReceivedTitleCallback(mCallback)
@@ -80,14 +65,11 @@ public class BaseWebActivity extends AppCompatActivity {
                 .createAgentWeb()//
                 .ready()
                 .go(getUrl());
-
-        //mAgentWeb.getLoader().loadUrl(getUrl());
-
         long n = System.currentTimeMillis();
         Log.i("Info", "init used time:" + (n - p));
     }
 
-    private WebViewClient mWebViewClient=new WebViewClient(){
+    private WebViewClient mWebViewClient = new WebViewClient() {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             return super.shouldOverrideUrlLoading(view, request);
@@ -95,18 +77,25 @@ public class BaseWebActivity extends AppCompatActivity {
 
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
-           //do you  work
-            Log.i("Info","BaseWebActivity onPageStarted");
+            //do you  work
+            Log.i("Info", "BaseWebActivity onPageStarted");
+        }
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            super.onPageFinished(view, url);
+            dismissLoading();
         }
     };
-    private WebChromeClient mWebChromeClient=new WebChromeClient(){
+    private WebChromeClient mWebChromeClient = new WebChromeClient() {
         @Override
         public void onProgressChanged(WebView view, int newProgress) {
             //do you work
 //            Log.i("Info","progress:"+newProgress);
         }
     };
-    public String getUrl(){
+
+    public String getUrl() {
         return "http://h5.520cai.com/";
     }
 
@@ -117,7 +106,6 @@ public class BaseWebActivity extends AppCompatActivity {
                 mTitleTextView.setText(title);
         }
     };
-
 
     private void showDialog() {
 
@@ -147,7 +135,6 @@ public class BaseWebActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-
         if (mAgentWeb.handleKeyEvent(keyCode, event)) {
             return true;
         }
@@ -173,11 +160,38 @@ public class BaseWebActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        //mAgentWeb.destroy();
         mAgentWeb.getWebLifeCycle().onDestroy();
+    }
+
+    protected void showLoading() {
+        try {
+            mDialog = new Dialog(this, R.style.loading_customDialog);
+            View view = LayoutInflater.from(this).inflate(
+                    R.layout.loading_layout, null);
+            GifView gifView = (GifView) view.findViewById(R.id.gifView);
+            gifView.setMovieResource(R.raw.loading);
+            mDialog.setCancelable(false);
+            mDialog.setCanceledOnTouchOutside(false);
+            mDialog.setContentView(view);
+            if (null != mDialog && !mDialog.isShowing()) {
+                mDialog.show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void dismissLoading() {
+        try {
+            if (null != mDialog && mDialog.isShowing()) {
+                mDialog.dismiss();
+                mDialog = null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
