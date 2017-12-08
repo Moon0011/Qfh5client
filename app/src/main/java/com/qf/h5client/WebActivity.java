@@ -1,7 +1,5 @@
 package com.qf.h5client;
 
-import android.content.Intent;
-
 public class WebActivity extends BaseWebActivity {
 
     @Override
@@ -17,6 +15,5 @@ public class WebActivity extends BaseWebActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Intent mIntent=new Intent();
     }
 }
